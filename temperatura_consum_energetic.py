@@ -89,9 +89,11 @@ print(f"Intercept (b): {b:.2f}")
 y_pred = model.predict(X)
 mse = mean_squared_error(y, y_pred)
 r2 = r2_score(y, y_pred)
+rmse = math.sqrt(mse)
 
-print("\n📊 AVALUACIÓ DEL MODEL:")
+print("\n📊 AVALUACIÓ DEL MODEL LINEAL:")
 print(f" - MSE (Error cuadrático medio): {mse:.2f}")
+print(f" - RMSE: {rmse:.2f} MWh")
 print(f" - R² (Coeficiente de determinación): {r2:.4f}")
 
 # Interpretació automàtica
@@ -103,7 +105,7 @@ else:
     print("   ➤ El model explica bé la variació del consum segons la temperatura.")
 
 # ==============================================================
-# 6️⃣ Visualització dels resultats
+# 6️⃣ Visualització dels resultats — Model Lineal
 # ==============================================================
 
 plt.figure(figsize=(8,5))
@@ -113,12 +115,17 @@ plt.title("Ajust de regressió lineal")
 plt.xlabel("Temperatura (°C)")
 plt.ylabel("Consum elèctric (MWh)")
 plt.legend()
-plt.show()
 
-print("\n📈 VISUALITZACIÓ DELS RESULTATS:")
-print("   ➤ La línia vermella mostra el model lineal sobre les dades reals.")
-print("   ➤ Si les dades formen una corba o hi ha molta dispersió, pot indicar una relació no lineal.")
-print("   ➤ En aquest cas, provarem una regressió polinòmica per veure si millora l’ajust.")
+text_metrics = f"RMSE = {rmse:.2f}     R² = {r2:.4f}"
+plt.text(
+    0.5, -0.18, text_metrics,
+    ha='center', va='center', transform=plt.gca().transAxes,
+    fontsize=11, color='black',
+    bbox=dict(facecolor='white', alpha=0.8, edgecolor='gray')
+)
+
+plt.tight_layout()
+plt.show()
 
 # ==============================================================
 # 7️⃣ Regressió polinòmica (grau 2)
@@ -131,55 +138,75 @@ poly_model = LinearRegression()
 poly_model.fit(X_poly, y)
 y_poly_pred = poly_model.predict(X_poly)
 
+mse_poly = mean_squared_error(y, y_poly_pred)
+rmse_poly = math.sqrt(mse_poly)
 r2_poly = r2_score(y, y_poly_pred)
-print(f"\nR² model polinòmic: {r2_poly:.4f}")
+
+print("\n📊 AVALUACIÓ DEL MODEL POLINÒMIC (GRAU 2):")
+print(f" - MSE: {mse_poly:.2f}")
+print(f" - RMSE: {rmse_poly:.2f} MWh")
+print(f" - R²: {r2_poly:.4f}")
 
 plt.figure(figsize=(8,5))
-plt.scatter(X, y, alpha=0.6)
-plt.plot(np.sort(X.values, axis=0),
-         y_poly_pred[np.argsort(X.values[:, 0])],
-         color='orange', label='Model polinòmic (grau 2)')
+plt.scatter(X, y, alpha=0.6, label='Dades reals')
+plt.plot(
+    np.sort(X.values, axis=0),
+    y_poly_pred[np.argsort(X.values[:, 0])],
+    color='orange', label='Model polinòmic (grau 2)'
+)
 plt.title("Regressió polinòmica (grau 2)")
 plt.xlabel("Temperatura (°C)")
 plt.ylabel("Consum elèctric (MWh)")
 plt.legend()
+
+# 🔹 Mostrem RMSE i R² dins del gràfic
+text_metrics_poly = f"RMSE = {rmse_poly:.2f}     R² = {r2_poly:.4f}"
+plt.text(
+    0.5, -0.18, text_metrics_poly,
+    ha='center', va='center', transform=plt.gca().transAxes,
+    fontsize=11, color='black',
+    bbox=dict(facecolor='white', alpha=0.8, edgecolor='gray')
+)
+
+plt.tight_layout()
 plt.show()
 
 # ==============================================================
 # 8️⃣ Avaluació avançada i residus
 # ==============================================================
 
-rmse = math.sqrt(mse)
-print(f"\nRMSE: {rmse:.2f} MWh (Error medio cuadrático raíz)")
-
 pred_0 = model.predict([[0]])[0]
-print(f"Predicción del consumo si Temperatura = 0°C: {pred_0:.2f} MWh")
+print(f"\nPredicció del consum si Temperatura = 0°C: {pred_0:.2f} MWh")
 
 residuals = y - y_pred
-print(f"\nEstadísticas residuales:\n media: {residuals.mean():.2f}\n std: {residuals.std():.2f}\n min: {residuals.min():.2f}\n max: {residuals.max():.2f}")
+print(f"\nEstadístiques dels residus:")
+print(f" mitjana: {residuals.mean():.2f}")
+print(f" desviació estàndard: {residuals.std():.2f}")
+print(f" mínim: {residuals.min():.2f}")
+print(f" màxim: {residuals.max():.2f}")
 
 plt.figure(figsize=(8,4))
 plt.scatter(y_pred, residuals, alpha=0.6)
 plt.axhline(0, color='red', linestyle='--')
-plt.title("Residuales vs Predicciones")
-plt.xlabel("Predicho (MWh)")
-plt.ylabel("Residuales (MWh)")
+plt.title("Residus vs Prediccions")
+plt.xlabel("Predicció (MWh)")
+plt.ylabel("Residus (MWh)")
 plt.grid(True)
 plt.show()
 
 plt.figure(figsize=(8,4))
 plt.hist(residuals, bins=40, edgecolor='k', alpha=0.7)
-plt.title("Histograma residuales")
+plt.title("Histograma de residus")
 plt.xlabel("Residual (MWh)")
-plt.ylabel("Frecuencia")
+plt.ylabel("Freqüència")
 plt.show()
 
 plt.figure(figsize=(8,4))
 plt.scatter(data['Temperature'], residuals, alpha=0.6)
 plt.axhline(0, color='red', linestyle='--')
-plt.title("Residuales vs Temperatura")
+plt.title("Residus vs Temperatura")
 plt.xlabel("Temperatura (°C)")
-plt.ylabel("Residuales (MWh)")
+plt.ylabel("Residus (MWh)")
 plt.grid(True)
 plt.show()
 
@@ -194,28 +221,30 @@ rmse_cv = math.sqrt(mse_cv)
 r2_cv_scores = cross_val_score(model, X, y, scoring='r2', cv=kf)
 r2_cv = r2_cv_scores.mean()
 
-print(f"\nValidación cruzada (5-fold):\n RMSE_cv: {rmse_cv:.2f} MWh\n R²_cv: {r2_cv:.4f}")
+print(f"\nValidació creuada (5-fold):")
+print(f" RMSE_cv: {rmse_cv:.2f} MWh")
+print(f" R²_cv: {r2_cv:.4f}")
 
 # ==============================================================
-# 🔟 Sugerencias según rendimiento
+# 🔟 Sugeriments segons rendiment
 # ==============================================================
 
-print("\nSugerencia:")
+print("\nSugeriment:")
 if r2 < 0.4:
-    print(" - R² bajo: considera usar variables adicionales (estacionalidad, día de la semana), features polinómicas o modelos no lineales.")
+    print(" - R² baix: considera afegir més variables (estacionalitat, dia de la setmana), features polinòmiques o models no lineals.")
 elif r2 < 0.7:
-    print(" - R² moderado: el modelo captura parte de la variabilidad, mejora posible con más features o polinomio.")
+    print(" - R² moderat: el model captura part de la variabilitat, però pot millorar-se amb més dades o variables.")
 else:
-    print(" - R² alto: el modelo lineal simple probablemente captura bien la relación principal.")
+    print(" - R² alt: el model lineal simple captura bé la relació principal.")
 
 # ==============================================================
-# 📦 Exportar resultados
+# 📦 Exportar resultats
 # ==============================================================
 
 out = data.copy()
 out['Predicted'] = y_pred
 out['Residual'] = residuals
 out.to_csv("predictions_and_residuals.csv", index=False)
-print("\nSe ha guardado 'predictions_and_residuals.csv' con predicciones y residuales.")
+print("\n📁 S'ha guardat 'predictions_and_residuals.csv' amb prediccions i residus.")
 
-print("\n✅ Análisis completado correctamente.")
+print("\n✅ Anàlisi completada correctament.")
